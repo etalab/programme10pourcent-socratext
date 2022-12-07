@@ -29,7 +29,7 @@ def main(args):
     torch.cuda.empty_cache()
     gc.collect()
 
-    # Choix du nombre de coeur du CPU pour l'entrainement
+    # Training specs
     gpus = args.gpus
     if gpus == 0:
         cores = os.cpu_count()
@@ -47,11 +47,12 @@ def main(args):
         revision="no_ocr"
     )
     data_module = TicketsDataModule(
-        data=data[:40],
-        test_data=data[40:len(data)],
+        data=data[:10],
+        test_data=data[10:13],
         processor=processor,
         batch_size=2,
-        num_workers=72)  # type: ignore
+        num_workers=0
+    )  # type: ignore
 
     # Define model
     model = LayoutLMv2Module(initial_lr=args.lr)
@@ -78,9 +79,10 @@ def main(args):
     trainer = pl.Trainer(
         callbacks=[lr_monitor, checkpoint_callback, early_stop_callback],
         logger=logger,
-        max_epochs=5,
+        max_epochs=2,
         gpus=gpus,
-        num_sanity_val_steps=0
+        num_sanity_val_steps=0,
+        log_every_n_steps=5
     )
     trainer.fit(model, datamodule=data_module)
     trainer.test(datamodule=data_module)
