@@ -28,6 +28,7 @@ class LabelStudioJsonFormatter:
         for image_data in data:
             image_path = os.path.join(
                 get_project_root(),
+                "data/sample/",
                 image_data["data"]["image"][21:]
             )
 
@@ -90,15 +91,16 @@ class LabelStudioJsonFormatter:
             # rotation = value["rotation"]
             # Ignoring the rotation parameter for now
 
-            # [x1, y1, x3, y3] format
+            # TODO : clarify this section
+            #  [x1, y1, x3, y3] format
             x1 = 10 * x
-            # y1 = 10 * (100 - y - height)
+            y1 = 10 * (100 - y - height)
             # y1 = 10 * (y + height)
-            y1 = 10 * (100 - y)
+            # y1 = 10 * (100 - y)
             x3 = 10 * (x + width)
-            # y3 = 10 * (100 - y)
+            y3 = 10 * (100 - y)
             # y3 = 10 * y
-            y3 = 10 * (100 - y - height)
+            # y3 = 10 * (100 - y - height)
 
             boxes.append([int(coord) for coord in [x1, y1, x3, y3]])
             try:

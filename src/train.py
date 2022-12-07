@@ -12,10 +12,10 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, \
     EarlyStopping, LearningRateMonitor
-from transformers import LayoutLMv2ForTokenClassification
+from transformers import LayoutLMv2Processor
 
 from data.data_module import TicketsDataModule
-from mappings import label2id
+from models.layout_lm_v2 import LayoutLMv2Module
 from utils import get_project_root
 
 
@@ -41,16 +41,20 @@ def main(args):
         data = json.load(f)
     random.shuffle(data)
 
+    # Define DataModule
+    processor = LayoutLMv2Processor.from_pretrained(
+        "microsoft/layoutlmv2-base-uncased",
+        revision="no_ocr"
+    )
     data_module = TicketsDataModule(
         data=data[:40],
         test_data=data[40:len(data)],
-        batch_size=4,
+        processor=processor,
+        batch_size=2,
         num_workers=72)  # type: ignore
 
-    model = LayoutLMv2ForTokenClassification.from_pretrained(
-        'microsoft/layoutlmv2-base-uncased',
-        num_labels=len(label2id)
-    )
+    # Define model
+    model = LayoutLMv2Module(initial_lr=args.lr)
 
     EXPERIMENT_NAME = f"{model.__class__.__name__}"
     if args.s3:

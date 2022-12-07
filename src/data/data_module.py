@@ -1,6 +1,9 @@
-"""Tickets Dataset Module."""
+"""
+Tickets Dataset Module.
+"""
 from typing import List
 
+import random
 import pytorch_lightning as pl
 from albumentations import Compose
 from PIL import Image, ImageOps
@@ -34,7 +37,7 @@ class TicketsDataset(Dataset):
         image_data = self.formatted_data[idx]
 
         # Get path and image
-        path = image_data["image_path"]
+        path = image_data["path"]
         image = Image.open(path)
         image = ImageOps.exif_transpose(image)
 
@@ -83,7 +86,7 @@ class TicketsDataModule(pl.LightningDataModule):
         processor=None,
         transforms_preprocessing: Compose = None,
         transforms_augmentation: Compose = None,
-        batch_size: int = 8,
+        batch_size: int = 2,
         num_workers: int = 4,
     ):
         """
@@ -129,7 +132,7 @@ class TicketsDataModule(pl.LightningDataModule):
                 for trainer.fit and trainer.test.
         """
         n_samples = len(self.data)
-        self.data.sort()
+        random.shuffle(self.data)
         train_slice = slice(0, int(n_samples * 0.8))
         val_slice = slice(int(n_samples * 0.8), n_samples)
 
