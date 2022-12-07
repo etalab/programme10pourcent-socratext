@@ -38,3 +38,8 @@ Werkzeug==2.2.2
 joblib==1.1.0
 opencv-python
 matplotlib
+
+# Requirements for the training pipeline
+pytorch_lightning
+transformers
+albumentations
