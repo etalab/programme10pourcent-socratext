@@ -1,22 +1,31 @@
-"""Module d'apprentissage"""
+"""
+Training pipeline.
+"""
 import os
 import random
 import json
-import albumentations as album
+
 from argparse import ArgumentParser
 import torch
 import gc
 import pytorch_lightning as pl
-from albumentations.pytorch.transforms import ToTensorV2
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, \
     EarlyStopping, LearningRateMonitor
+from transformers import LayoutLMv2ForTokenClassification
 
-from tablenet import MarmotDataModule
-from tablenet import TableNetModule
+from data.data_module import TicketsDataModule
+from mappings import label2id
+from utils import get_project_root
 
 
 def main(args):
+    """
+    Main method.
+
+    Args:
+        args (_type_): _description_
+    """
     torch.cuda.empty_cache()
     gc.collect()
 
@@ -26,18 +35,22 @@ def main(args):
         cores = os.cpu_count()
         torch.set_num_threads(cores)
 
-    with open(os.path.join(get_root_path(), 'data/sample/labeled_sample.json') as f:
+    with open(
+        os.path.join(get_project_root(), 'data/sample/labeled_sample.json')
+    ) as f:
         data = json.load(f)
     random.shuffle(data)
-    
+
     data_module = TicketsDataModule(
         data=data[:40],
         test_data=data[40:len(data)],
         batch_size=4,
         num_workers=72)  # type: ignore
 
-    model = LayoutLMv2ForTokenClassification.from_pretrained('microsoft/layoutlmv2-base-uncased',
-                                                             num_labels=len(label2id))
+    model = LayoutLMv2ForTokenClassification.from_pretrained(
+        'microsoft/layoutlmv2-base-uncased',
+        num_labels=len(label2id)
+    )
 
     EXPERIMENT_NAME = f"{model.__class__.__name__}"
     if args.s3:
@@ -63,7 +76,8 @@ def main(args):
         logger=logger,
         max_epochs=5,
         gpus=gpus,
-        num_sanity_val_steps=0)
+        num_sanity_val_steps=0
+    )
     trainer.fit(model, datamodule=data_module)
     trainer.test(datamodule=data_module)
 
