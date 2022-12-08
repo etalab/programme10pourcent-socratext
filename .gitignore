@@ -137,3 +137,6 @@ dmypy.json
 
 # Mac
 .DS_Store
+
+# Sample in the data directory
+data/sample/
