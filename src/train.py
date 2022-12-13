@@ -24,22 +24,28 @@ def main(args):
     Main method.
 
     Args:
-        args (_type_): _description_
+        args: Main method arguments.
     """
     torch.cuda.empty_cache()
     gc.collect()
 
     # Training specs
     gpus = args.gpus
+    cores = os.cpu_count()
     if gpus == 0:
-        cores = os.cpu_count()
         torch.set_num_threads(cores)
+        print(f"Using {cores} cpus.")
 
+    # Loading a data sample
     with open(
         os.path.join(get_project_root(), 'data/sample/labeled_sample.json')
     ) as f:
         data = json.load(f)
+    # Splitting the data into train/test
+    n_samples = len(data)
     random.shuffle(data)
+    train_slice = slice(0, int(n_samples * 0.8))
+    test_slide = slice(int(n_samples * 0.8), n_samples)
 
     # Define DataModule
     processor = LayoutLMv2Processor.from_pretrained(
@@ -47,11 +53,11 @@ def main(args):
         revision="no_ocr"
     )
     data_module = TicketsDataModule(
-        data=data[:10],
-        test_data=data[10:13],
+        data=data[train_slice],
+        test_data=data[test_slide],
         processor=processor,
-        batch_size=2,
-        num_workers=0
+        batch_size=args.batch_size,
+        num_workers=cores
     )  # type: ignore
 
     # Define model
@@ -62,24 +68,25 @@ def main(args):
         logs_dir = 's3://projet-socratext/logs'
     else:
         logs_dir = 'logs'
+    # TensorBoard Logging
     logger = TensorBoardLogger(logs_dir, name=EXPERIMENT_NAME)
 
     checkpoint_callback = ModelCheckpoint(
         monitor='validation_loss',
         save_top_k=1,
-        save_last=True,
+        # save_last=True,
         mode="min")
     early_stop_callback = EarlyStopping(
         monitor='validation_loss',
         mode="min",
-        patience=40
+        patience=2
     )
     lr_monitor = LearningRateMonitor(logging_interval='step')
 
     trainer = pl.Trainer(
         callbacks=[lr_monitor, checkpoint_callback, early_stop_callback],
         logger=logger,
-        max_epochs=2,
+        max_epochs=30,
         gpus=gpus,
         num_sanity_val_steps=0,
         log_every_n_steps=5
@@ -92,7 +99,8 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--gpus', default=1)
     parser.add_argument('--s3', dest='s3', action='store_true')
-    parser.add_argument('--lr', default=0.001)
+    parser.add_argument('--lr', default=0.004)
+    parser.add_argument('--batch-size', default=2)
     parser.set_defaults(s3=False)
 
     args = parser.parse_args()
