@@ -68,6 +68,7 @@ def main(args):
         logs_dir = 's3://projet-socratext/logs'
     else:
         logs_dir = 'logs'
+    # TensorBoard Logging
     logger = TensorBoardLogger(logs_dir, name=EXPERIMENT_NAME)
 
     checkpoint_callback = ModelCheckpoint(
