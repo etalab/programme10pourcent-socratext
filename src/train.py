@@ -74,19 +74,19 @@ def main(args):
     checkpoint_callback = ModelCheckpoint(
         monitor='validation_loss',
         save_top_k=1,
-        save_last=True,
+        # save_last=True,
         mode="min")
     early_stop_callback = EarlyStopping(
         monitor='validation_loss',
         mode="min",
-        patience=40
+        patience=2
     )
     lr_monitor = LearningRateMonitor(logging_interval='step')
 
     trainer = pl.Trainer(
         callbacks=[lr_monitor, checkpoint_callback, early_stop_callback],
         logger=logger,
-        max_epochs=2,
+        max_epochs=30,
         gpus=gpus,
         num_sanity_val_steps=0,
         log_every_n_steps=5
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--gpus', default=1)
     parser.add_argument('--s3', dest='s3', action='store_true')
-    parser.add_argument('--lr', default=0.001)
+    parser.add_argument('--lr', default=0.004)
     parser.add_argument('--batch-size', default=2)
     parser.set_defaults(s3=False)
 
