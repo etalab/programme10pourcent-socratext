@@ -1,0 +1,13 @@
+name: socratext
+
+entry_points:
+  ticket_extraction:
+    parameters:
+      remote_server_uri: {type: str, default: https://mlflow.lab.sspcloud.fr}
+      experiment_name: {type: str, default: ticket_extraction}
+      run_name: {type: str, default: default}
+      gpus: {type: int, default: 1}
+      s3: {type: bool, default: True}
+      lr: {type: float, default: 0.0003}
+      batch_size: {type: int, default: 8}
+    command: "python src/train.py --remote-server-uri {remote_server_uri} --experiment-name {experiment_name} --run-name {run_name} --gpus {gpus} --s3 --lr {lr} --batch-size {batch_size}"

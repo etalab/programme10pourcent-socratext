@@ -55,6 +55,8 @@ class TicketsDataset(Dataset):
             words,
             boxes=boxes,
             word_labels=word_labels,
+            max_length=512,
+            return_token_type_ids=True,
             padding="max_length",
             truncation=True,
             return_tensors="pt",
@@ -64,12 +66,18 @@ class TicketsDataset(Dataset):
         for k, v in encoded_inputs.items():
             encoded_inputs[k] = v.squeeze()
 
-        assert encoded_inputs.input_ids.shape == torch.Size([512])
-        assert encoded_inputs.attention_mask.shape == torch.Size([512])
-        assert encoded_inputs.token_type_ids.shape == torch.Size([512])
-        assert encoded_inputs.bbox.shape == torch.Size([512, 4])
-        assert encoded_inputs.image.shape == torch.Size([3, 224, 224])
-        assert encoded_inputs.labels.shape == torch.Size([512])
+        if encoded_inputs.input_ids.shape != torch.Size([512]):
+            raise ValueError(f"{encoded_inputs.input_ids.shape} is not of size torch.Size([512]).")
+        if encoded_inputs.attention_mask.shape != torch.Size([512]):
+            raise ValueError(f"{encoded_inputs.attention_mask.shape} is not of size torch.Size([512]).")
+        if encoded_inputs.token_type_ids.shape != torch.Size([512]):
+            raise ValueError(f"{encoded_inputs.token_type_ids.shape} is not of size torch.Size([512]).")
+        if encoded_inputs.bbox.shape != torch.Size([512, 4]):
+            raise ValueError(f"{encoded_inputs.bbox.shape} is not of size torch.Size([512, 4]).")
+        if encoded_inputs.image.shape != torch.Size([3, 224, 224]):
+            raise ValueError(f"{encoded_inputs.image.shape} is not of size torch.Size([3, 224, 224]).")
+        if encoded_inputs.labels.shape != torch.Size([512]):
+            raise ValueError(f"{encoded_inputs.labels.shape} is not of size torch.Size([512]).")
 
         return encoded_inputs
 
